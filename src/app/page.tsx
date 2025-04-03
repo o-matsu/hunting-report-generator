@@ -239,7 +239,15 @@ export default function CaptureForm() {
                     <FormItem>
                       <FormLabel>捕獲場所</FormLabel>
                       <FormControl>
-                        <Input placeholder="場所を入力" {...field} />
+                        <div className="relative flex rounded-md border">
+                          <span className="inline-flex items-center px-3 rounded-l-md border-r bg-gray-50 text-gray-500 whitespace-nowrap">茅野市</span>
+                          <Input
+                            placeholder="場所を入力"
+                            className="rounded-l-none border-0"
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
