@@ -19,6 +19,17 @@ import * as z from "zod"
 import type { ControllerRenderProps } from "react-hook-form"
 import handleGenerate from "./generate"
 
+export enum Gender {
+  Male = "Male",
+  Female = "Female",
+}
+
+// Gender enumに対応するテンプレート名を定義
+export const GenderTemplate = {
+  [Gender.Male]: 'gender-male',
+  [Gender.Female]: 'gender-female',
+} as const;
+
 // Update the form schema to include the photo fields
 const formSchema = z.object({
   submissionDate: z.date({
@@ -27,7 +38,7 @@ const formSchema = z.object({
   capturerName: z.string().min(2, {
     message: "Capturer name must be at least 2 characters.",
   }),
-  animalGender: z.string({
+  animalGender: z.nativeEnum(Gender, {
     required_error: "Please select the gender of the animal.",
   }),
   captureDate: z.date({
@@ -169,8 +180,8 @@ export default function CaptureForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value={Gender.Male}>{Gender.Male}</SelectItem>
+                          <SelectItem value={Gender.Female}>{Gender.Female}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

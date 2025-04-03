@@ -90,7 +90,7 @@
         "readOnly": false
       },
       {
-        "name": "sex-male",
+        "name": "gender-male",
         "type": "ellipse",
         "position": { "x": 64.03, "y": 108.88 },
         "width": 15.35,
@@ -105,7 +105,7 @@
         "content": ""
       },
       {
-        "name": "sex-female",
+        "name": "gender-female",
         "type": "ellipse",
         "position": { "x": 85.46, "y": 108.88 },
         "width": 15.35,
