@@ -3,7 +3,7 @@ import { text, image, ellipse } from '@pdfme/schemas';
 import { generate } from '@pdfme/generator';
 import * as templateFile from '../template.json';
 import type { FormValues } from './page';
-import { GenderTemplate } from './page';
+import { GenderTemplate, DisposalMethodTemplate } from './page';
 
 const font: Font = {
   NotoSerifJP: {
@@ -14,17 +14,30 @@ const font: Font = {
 
 const originalTemplate: Template = templateFile as Template;
 
+// 日付から日本語の曜日を取得する関数
+const getJapaneseDayOfWeek = (date: Date): string => {
+  const dayOfWeek = date.getDay();
+  return ['日', '月', '火', '水', '木', '金', '土'][dayOfWeek];
+};
+
 const handleGenerate = (values: FormValues) => {
+  console.log(values);
   const template: Template = {
     ...originalTemplate,
     schemas: [
       originalTemplate.schemas[0].filter((schema) => {
-        // gender- で始まるスキーマのみをフィルタリング
-        if (!schema.name.startsWith('gender-')) return true;
+        // gender- で始まるスキーマの処理
+        if (schema.name.startsWith('gender-')) {
+          return schema.name === GenderTemplate[values.animalGender];
+        }
 
-        console.log(GenderTemplate[values.animalGender]);
-        // 選択された性別に対応するテンプレート名のスキーマのみを残す
-        return schema.name === GenderTemplate[values.animalGender];
+        // disposal- で始まるスキーマの処理
+        if (schema.name.startsWith('disposal-')) {
+          return schema.name === DisposalMethodTemplate[values.disposalMethod];
+        }
+
+        // その他のスキーマはそのまま残す
+        return true;
       }),
       originalTemplate.schemas[1]
     ]
@@ -38,6 +51,7 @@ const handleGenerate = (values: FormValues) => {
       capture_year: values.captureDate.getFullYear().toString(),
       capture_month: (values.captureDate.getMonth() + 1).toString(),
       capture_day: values.captureDate.getDate().toString(),
+      capture_day_of_week: getJapaneseDayOfWeek(values.captureDate),
       location: values.captureLocation,
       location_number: values.diagramNumber,
       picture_before: values.firstPhoto?.base64,

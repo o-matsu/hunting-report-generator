@@ -86,7 +86,7 @@
         "opacity": 1,
         "strikethrough": false,
         "underline": false,
-        "required": true,
+        "required": false,
         "readOnly": false
       },
       {
@@ -138,7 +138,7 @@
         "opacity": 1,
         "strikethrough": false,
         "underline": false,
-        "required": true,
+        "required": false,
         "readOnly": false
       },
       {
@@ -160,7 +160,7 @@
         "opacity": 1,
         "strikethrough": false,
         "underline": false,
-        "required": true,
+        "required": false,
         "readOnly": false
       },
       {
@@ -182,7 +182,29 @@
         "opacity": 1,
         "strikethrough": false,
         "underline": false,
-        "required": true,
+        "required": false,
+        "readOnly": false
+      },
+      {
+        "name": "capture_day_of_week",
+        "type": "text",
+        "content": "月",
+        "position": { "x": 138.64, "y": 118 },
+        "width": 10,
+        "height": 6,
+        "rotate": 0,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "fontSize": 11,
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "fontName": "NotoSerifJP",
+        "backgroundColor": "",
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "required": false,
         "readOnly": false
       },
       {
@@ -226,11 +248,11 @@
         "opacity": 1,
         "strikethrough": false,
         "underline": false,
-        "required": true,
+        "required": false,
         "readOnly": false
       },
       {
-        "name": "dispose-burial",
+        "name": "disposal-burial",
         "type": "ellipse",
         "position": { "x": 63.5, "y": 134 },
         "width": 15.35,
@@ -245,7 +267,7 @@
         "content": ""
       },
       {
-        "name": "dispose-incineration",
+        "name": "disposal-incineration",
         "type": "ellipse",
         "position": { "x": 78.58, "y": 134 },
         "width": 15.35,
@@ -260,7 +282,7 @@
         "content": ""
       },
       {
-        "name": "dispose-personal",
+        "name": "disposal-personal",
         "type": "ellipse",
         "position": { "x": 98.42, "y": 134 },
         "width": 15.35,
@@ -275,7 +297,7 @@
         "content": ""
       },
       {
-        "name": "dispose-facility",
+        "name": "disposal-facility",
         "type": "ellipse",
         "position": { "x": 130.7, "y": 134 },
         "width": 15.35,

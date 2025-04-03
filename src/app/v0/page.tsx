@@ -30,6 +30,21 @@ export const GenderTemplate = {
   [Gender.Female]: 'gender-female',
 } as const;
 
+export enum DisposalMethod {
+  Burial = "Burial",
+  Incineration = "Incineration",
+  PersonalConsumption = "Personal consumption",
+  ProcessingFacility = "Transport to a wild meat processing facility",
+}
+
+// DisposalMethod enumに対応するテンプレート名を定義
+export const DisposalMethodTemplate = {
+  [DisposalMethod.Burial]: 'disposal-burial',
+  [DisposalMethod.Incineration]: 'disposal-incineration',
+  [DisposalMethod.PersonalConsumption]: 'disposal-personal',
+  [DisposalMethod.ProcessingFacility]: 'disposal-facility',
+} as const;
+
 // Update the form schema to include the photo fields
 const formSchema = z.object({
   submissionDate: z.date({
@@ -50,7 +65,7 @@ const formSchema = z.object({
   diagramNumber: z.string().refine((val) => !isNaN(Number(val)), {
     message: "Diagram number must be a valid number.",
   }),
-  disposalMethod: z.string({
+  disposalMethod: z.nativeEnum(DisposalMethod, {
     required_error: "Please select a disposal method.",
   }),
   firstPhoto: z.object({
@@ -257,12 +272,10 @@ export default function CaptureForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Burial">Burial</SelectItem>
-                          <SelectItem value="Incineration">Incineration</SelectItem>
-                          <SelectItem value="Personal consumption">Personal consumption</SelectItem>
-                          <SelectItem value="Transport to a wild meat processing facility">
-                            Transport to a wild meat processing facility
-                          </SelectItem>
+                          <SelectItem value={DisposalMethod.Burial}>{DisposalMethod.Burial}</SelectItem>
+                          <SelectItem value={DisposalMethod.Incineration}>{DisposalMethod.Incineration}</SelectItem>
+                          <SelectItem value={DisposalMethod.PersonalConsumption}>{DisposalMethod.PersonalConsumption}</SelectItem>
+                          <SelectItem value={DisposalMethod.ProcessingFacility}>{DisposalMethod.ProcessingFacility}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
