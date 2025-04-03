@@ -1,48 +1,388 @@
-'use client';
+"use client"
 
-import { Template, Font } from '@pdfme/common';
-import { text, image, ellipse } from '@pdfme/schemas';
-import { generate } from '@pdfme/generator';
-import * as templateFile from './template.json';
+import type React from "react"
 
-const font: Font = {
-  NotoSerifJP: {
-    data: 'http://localhost:3000/NotoSerifJP-Regular.ttf',
-    fallback: true,
-  },
-};
+import { useState } from "react"
+import { format } from "date-fns"
+import { CalendarIcon, Upload } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import type { ControllerRenderProps } from "react-hook-form"
+import handleGenerate from "./generate"
+import { Gender, DisposalMethod } from './generate';
 
-const originalTemplate: Template = templateFile as Template;
 
-export default function Home() {
-  const handleGenerate = () => {
-    const template: Template = {
-      ...originalTemplate,
-      schemas: [
-        originalTemplate.schemas[0].filter((schema) => schema.name !== 'sex_male'),
-        originalTemplate.schemas[1]
-      ]
-    };
-    const inputs = [
-      {
-        submission_year: '1991',
-        submission_month: '5',
-        submission_day: '1',
-        name: '松下 亮介',
-      },
-    ];
+// Update the form schema to include the photo fields
+const formSchema = z.object({
+  submissionDate: z.date({
+    required_error: "Submission date is required",
+  }),
+  capturerName: z.string().min(2, {
+    message: "Capturer name must be at least 2 characters.",
+  }),
+  animalGender: z.nativeEnum(Gender, {
+    required_error: "Please select the gender of the animal.",
+  }),
+  captureDate: z.date({
+    required_error: "Capture date is required",
+  }),
+  captureLocation: z.string().min(2, {
+    message: "Capture location must be at least 2 characters.",
+  }),
+  diagramNumber: z.string().refine((val) => !isNaN(Number(val)), {
+    message: "Diagram number must be a valid number.",
+  }),
+  disposalMethod: z.nativeEnum(DisposalMethod, {
+    required_error: "Please select a disposal method.",
+  }),
+  firstPhoto: z.object({
+    file: z.instanceof(File),
+    base64: z.string(),
+  }).optional(),
+  secondPhoto: z.object({
+    file: z.instanceof(File),
+    base64: z.string(),
+  }).optional(),
+})
 
-    generate({ template, inputs, plugins: { text, image, ellipse }, options: { font } }).then((pdf) => {
-      console.log(pdf);
-      const blob = new Blob([pdf], { type: 'application/pdf' });
-      window.open(URL.createObjectURL(blob));
-    });
+type FormValues = z.infer<typeof formSchema>
+export type { FormValues }
+
+type FieldProps<T extends keyof FormValues> = {
+  field: ControllerRenderProps<FormValues, T>
+}
+
+export default function CaptureForm() {
+  const [firstPhotoPreview, setFirstPhotoPreview] = useState<string | null>(null)
+  const [secondPhotoPreview, setSecondPhotoPreview] = useState<string | null>(null)
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      submissionDate: new Date(),
+      captureDate: new Date(),
+      capturerName: "",
+      captureLocation: "",
+      diagramNumber: "",
+    },
+  })
+
+  function onSubmit(values: FormValues) {
+    handleGenerate(values)
+  }
+
+  const processImage = (
+    file: File,
+    setPreview: (preview: string) => void,
+    fieldName: "firstPhoto" | "secondPhoto"
+  ): void => {
+    try {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          // 最大幅・高さを800pxに設定
+          const MAX_SIZE = 800;
+          let width = img.width;
+          let height = img.height;
+
+          // アスペクト比を保持しながらリサイズ
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          ctx.drawImage(img, 0, 0, width, height);
+          // 画質を0.8に設定してJPEG形式で出力
+          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          setPreview(base64);
+          form.setValue(fieldName, { file, base64 });
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Failed to process image:', error);
+    }
+  };
+
+  const handleFirstPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processImage(file, setFirstPhotoPreview, "firstPhoto");
+    }
+  }
+
+  const handleSecondPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processImage(file, setSecondPhotoPreview, "secondPhoto");
+    }
   }
 
   return (
-    <div>
-      <h1>Hello World</h1>
-      <button onClick={handleGenerate}>Generate</button>
+    <div className="container mx-auto py-10">
+      <Card className="max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle>Animal Capture Report</CardTitle>
+          <CardDescription>Enter the required information to generate a capture report.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="submissionDate"
+                  render={({ field }: FieldProps<"submissionDate">) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Submission Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="capturerName"
+                  render={({ field }: FieldProps<"capturerName">) => (
+                    <FormItem>
+                      <FormLabel>Capturer&apos;s Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="animalGender"
+                  render={({ field }: FieldProps<"animalGender">) => (
+                    <FormItem>
+                      <FormLabel>Animal Gender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={Gender.Male}>{Gender.Male}</SelectItem>
+                          <SelectItem value={Gender.Female}>{Gender.Female}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="captureDate"
+                  render={({ field }: FieldProps<"captureDate">) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Capture Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="captureLocation"
+                  render={({ field }: FieldProps<"captureLocation">) => (
+                    <FormItem>
+                      <FormLabel>Capture Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter location" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="diagramNumber"
+                  render={({ field }: FieldProps<"diagramNumber">) => (
+                    <FormItem>
+                      <FormLabel>Diagram Number</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Enter diagram number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="disposalMethod"
+                  render={({ field }: FieldProps<"disposalMethod">) => (
+                    <FormItem>
+                      <FormLabel>Disposal Method</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={DisposalMethod.Burial}>{DisposalMethod.Burial}</SelectItem>
+                          <SelectItem value={DisposalMethod.Incineration}>{DisposalMethod.Incineration}</SelectItem>
+                          <SelectItem value={DisposalMethod.PersonalConsumption}>{DisposalMethod.PersonalConsumption}</SelectItem>
+                          <SelectItem value={DisposalMethod.ProcessingFacility}>{DisposalMethod.ProcessingFacility}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {/* Photo upload section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="firstPhoto"
+                  render={({ field }: FieldProps<"firstPhoto">) => (
+                    <FormItem>
+                      <FormLabel>First Photo</FormLabel>
+                      <FormControl>
+                        <div className="border rounded-md p-4">
+                          <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 mb-4 relative">
+                            {firstPhotoPreview ? (
+                              <img
+                                src={firstPhotoPreview || "/placeholder.svg"}
+                                alt="First photo preview"
+                                className="h-full object-contain"
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                <p className="mt-2 text-sm text-gray-500">Click to upload first photo</p>
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                handleFirstPhotoChange(e)
+                                field.onChange(e.target.files?.[0] || null)
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                          </div>
+                          <FormDescription>Upload the first photo of the captured animal.</FormDescription>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="secondPhoto"
+                  render={({ field }: FieldProps<"secondPhoto">) => (
+                    <FormItem>
+                      <FormLabel>Second Photo</FormLabel>
+                      <FormControl>
+                        <div className="border rounded-md p-4">
+                          <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 mb-4 relative">
+                            {secondPhotoPreview ? (
+                              <img
+                                src={secondPhotoPreview || "/placeholder.svg"}
+                                alt="Second photo preview"
+                                className="h-full object-contain"
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                <p className="mt-2 text-sm text-gray-500">Click to upload second photo</p>
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                handleSecondPhotoChange(e)
+                                field.onChange(e.target.files?.[0] || null)
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                          </div>
+                          <FormDescription>Upload the second photo of the captured animal.</FormDescription>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Generate Report
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }

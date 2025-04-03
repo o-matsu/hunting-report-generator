@@ -1,13 +1,38 @@
 import { Template, Font } from '@pdfme/common';
 import { text, image, ellipse } from '@pdfme/schemas';
 import { generate } from '@pdfme/generator';
-import * as templateFile from '../template.json';
+import * as templateFile from './template.json';
 import type { FormValues } from './page';
-import { GenderTemplate, DisposalMethodTemplate } from './page';
+
+export enum Gender {
+  Male = "Male",
+  Female = "Female",
+}
+
+// Gender enumに対応するテンプレート名を定義
+export const GenderTemplate = {
+  [Gender.Male]: 'gender-male',
+  [Gender.Female]: 'gender-female',
+} as const;
+
+export enum DisposalMethod {
+  Burial = "Burial",
+  Incineration = "Incineration",
+  PersonalConsumption = "Personal consumption",
+  ProcessingFacility = "Transport to a wild meat processing facility",
+}
+
+// DisposalMethod enumに対応するテンプレート名を定義
+export const DisposalMethodTemplate = {
+  [DisposalMethod.Burial]: 'disposal-burial',
+  [DisposalMethod.Incineration]: 'disposal-incineration',
+  [DisposalMethod.PersonalConsumption]: 'disposal-personal',
+  [DisposalMethod.ProcessingFacility]: 'disposal-facility',
+} as const;
 
 const font: Font = {
   NotoSerifJP: {
-    data: 'http://localhost:3000/NotoSerifJP-Regular.ttf',
+    data: 'https://6e94-124-246-225-93.ngrok-free.app/NotoSerifJP-Regular.ttf',
     fallback: true,
   },
 };
