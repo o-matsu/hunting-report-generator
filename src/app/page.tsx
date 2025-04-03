@@ -135,8 +135,8 @@ export default function CaptureForm() {
     <div className="container mx-auto py-10">
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle>Animal Capture Report</CardTitle>
-          <CardDescription>Enter the required information to generate a capture report.</CardDescription>
+          <CardTitle>有害鳥獣捕獲実績報告書</CardTitle>
+          <CardDescription>報告書の情報を入力してください。</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -147,7 +147,7 @@ export default function CaptureForm() {
                   name="submissionDate"
                   render={({ field }: FieldProps<"submissionDate">) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Submission Date</FormLabel>
+                      <FormLabel>提出日</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -155,7 +155,7 @@ export default function CaptureForm() {
                               variant={"outline"}
                               className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                             >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              {field.value ? format(field.value, "PPP") : <span>日付を選択</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -174,9 +174,9 @@ export default function CaptureForm() {
                   name="capturerName"
                   render={({ field }: FieldProps<"capturerName">) => (
                     <FormItem>
-                      <FormLabel>Capturer&apos;s Name</FormLabel>
+                      <FormLabel>捕獲者名</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter name" {...field} />
+                        <Input placeholder="名前を入力" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -188,16 +188,16 @@ export default function CaptureForm() {
                   name="animalGender"
                   render={({ field }: FieldProps<"animalGender">) => (
                     <FormItem>
-                      <FormLabel>Animal Gender</FormLabel>
+                      <FormLabel>性別</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
+                            <SelectValue placeholder="性別を選択" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={Gender.Male}>{Gender.Male}</SelectItem>
-                          <SelectItem value={Gender.Female}>{Gender.Female}</SelectItem>
+                          <SelectItem value={Gender.Male}>オス</SelectItem>
+                          <SelectItem value={Gender.Female}>メス</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -210,7 +210,7 @@ export default function CaptureForm() {
                   name="captureDate"
                   render={({ field }: FieldProps<"captureDate">) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Capture Date</FormLabel>
+                      <FormLabel>捕獲日</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -218,7 +218,7 @@ export default function CaptureForm() {
                               variant={"outline"}
                               className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                             >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              {field.value ? format(field.value, "PPP") : <span>日付を選択</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -237,9 +237,9 @@ export default function CaptureForm() {
                   name="captureLocation"
                   render={({ field }: FieldProps<"captureLocation">) => (
                     <FormItem>
-                      <FormLabel>Capture Location</FormLabel>
+                      <FormLabel>捕獲場所</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter location" {...field} />
+                        <Input placeholder="場所を入力" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -251,9 +251,9 @@ export default function CaptureForm() {
                   name="diagramNumber"
                   render={({ field }: FieldProps<"diagramNumber">) => (
                     <FormItem>
-                      <FormLabel>Diagram Number</FormLabel>
+                      <FormLabel>図面番号</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Enter diagram number" {...field} />
+                        <Input type="number" placeholder="図面番号を入力" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -265,18 +265,18 @@ export default function CaptureForm() {
                   name="disposalMethod"
                   render={({ field }: FieldProps<"disposalMethod">) => (
                     <FormItem>
-                      <FormLabel>Disposal Method</FormLabel>
+                      <FormLabel>処分方法</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select method" />
+                            <SelectValue placeholder="処分方法を選択" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={DisposalMethod.Burial}>{DisposalMethod.Burial}</SelectItem>
-                          <SelectItem value={DisposalMethod.Incineration}>{DisposalMethod.Incineration}</SelectItem>
-                          <SelectItem value={DisposalMethod.PersonalConsumption}>{DisposalMethod.PersonalConsumption}</SelectItem>
-                          <SelectItem value={DisposalMethod.ProcessingFacility}>{DisposalMethod.ProcessingFacility}</SelectItem>
+                          <SelectItem value={DisposalMethod.Burial}>埋設</SelectItem>
+                          <SelectItem value={DisposalMethod.Incineration}>焼却</SelectItem>
+                          <SelectItem value={DisposalMethod.PersonalConsumption}>自家消費</SelectItem>
+                          <SelectItem value={DisposalMethod.ProcessingFacility}>獣肉処理施設</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -291,20 +291,20 @@ export default function CaptureForm() {
                   name="firstPhoto"
                   render={({ field }: FieldProps<"firstPhoto">) => (
                     <FormItem>
-                      <FormLabel>First Photo</FormLabel>
+                      <FormLabel>写真1枚目</FormLabel>
                       <FormControl>
                         <div className="border rounded-md p-4">
                           <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 mb-4 relative">
                             {firstPhotoPreview ? (
                               <img
                                 src={firstPhotoPreview || "/placeholder.svg"}
-                                alt="First photo preview"
+                                alt="1枚目のプレビュー"
                                 className="h-full object-contain"
                               />
                             ) : (
                               <div className="text-center">
                                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                <p className="mt-2 text-sm text-gray-500">Click to upload first photo</p>
+                                <p className="mt-2 text-sm text-gray-500">クリックして1枚目の写真をアップロード</p>
                               </div>
                             )}
                             <input
@@ -317,7 +317,7 @@ export default function CaptureForm() {
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                           </div>
-                          <FormDescription>Upload the first photo of the captured animal.</FormDescription>
+                          <FormDescription>1枚目の写真をアップロードしてください。</FormDescription>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -330,20 +330,20 @@ export default function CaptureForm() {
                   name="secondPhoto"
                   render={({ field }: FieldProps<"secondPhoto">) => (
                     <FormItem>
-                      <FormLabel>Second Photo</FormLabel>
+                      <FormLabel>写真2枚目</FormLabel>
                       <FormControl>
                         <div className="border rounded-md p-4">
                           <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 mb-4 relative">
                             {secondPhotoPreview ? (
                               <img
                                 src={secondPhotoPreview || "/placeholder.svg"}
-                                alt="Second photo preview"
+                                alt="2枚目のプレビュー"
                                 className="h-full object-contain"
                               />
                             ) : (
                               <div className="text-center">
                                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                <p className="mt-2 text-sm text-gray-500">Click to upload second photo</p>
+                                <p className="mt-2 text-sm text-gray-500">クリックして2枚目の写真をアップロード</p>
                               </div>
                             )}
                             <input
@@ -356,7 +356,7 @@ export default function CaptureForm() {
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                           </div>
-                          <FormDescription>Upload the second photo of the captured animal.</FormDescription>
+                          <FormDescription>2枚目の写真をアップロードしてください。</FormDescription>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -365,7 +365,7 @@ export default function CaptureForm() {
                 />
               </div>
               <Button type="submit" className="w-full">
-                Generate Report
+                報告書を生成
               </Button>
             </form>
           </Form>
