@@ -1,8 +1,8 @@
-import { Template, Font } from '@pdfme/common';
-import { text, image, ellipse } from '@pdfme/schemas';
-import { generate } from '@pdfme/generator';
-import * as templateFile from './template.json';
-import type { FormValues } from './page';
+import { Template, Font } from "@pdfme/common";
+import { text, image, ellipse } from "@pdfme/schemas";
+import { generate } from "@pdfme/generator";
+import * as templateFile from "./template.json";
+import type { FormValues } from "./page";
 
 export enum Gender {
   Male = "Male",
@@ -11,8 +11,8 @@ export enum Gender {
 
 // Gender enumに対応するテンプレート名を定義
 export const GenderTemplate = {
-  [Gender.Male]: 'gender-male',
-  [Gender.Female]: 'gender-female',
+  [Gender.Male]: "gender-male",
+  [Gender.Female]: "gender-female",
 } as const;
 
 export enum DisposalMethod {
@@ -24,26 +24,26 @@ export enum DisposalMethod {
 
 // DisposalMethod enumに対応するテンプレート名を定義
 export const DisposalMethodTemplate = {
-  [DisposalMethod.Burial]: 'disposal-burial',
-  [DisposalMethod.Incineration]: 'disposal-incineration',
-  [DisposalMethod.PersonalConsumption]: 'disposal-personal',
-  [DisposalMethod.ProcessingFacility]: 'disposal-facility',
+  [DisposalMethod.Burial]: "disposal-burial",
+  [DisposalMethod.Incineration]: "disposal-incineration",
+  [DisposalMethod.PersonalConsumption]: "disposal-personal",
+  [DisposalMethod.ProcessingFacility]: "disposal-facility",
 } as const;
 
 const originalTemplate: Template = templateFile as Template;
 
 // 日付から日本語の曜日を取得する関数
 const getJapaneseDayOfWeek = (date: Date | undefined): string => {
-  if (date === undefined) return '';
+  if (date === undefined) return "";
   const dayOfWeek = date.getDay();
-  return ['日', '月', '火', '水', '木', '金', '土'][dayOfWeek];
+  return ["日", "月", "火", "水", "木", "金", "土"][dayOfWeek];
 };
 
 const handleGenerate = async (values: FormValues) => {
   console.log(values);
 
   // フォントファイルを取得
-  const fontResponse = await fetch('/NotoSerifJP-Regular.ttf');
+  const fontResponse = await fetch("/NotoSerifJP-Regular.ttf");
   const fontData = await fontResponse.arrayBuffer();
 
   const font: Font = {
@@ -58,14 +58,14 @@ const handleGenerate = async (values: FormValues) => {
     schemas: [
       originalTemplate.schemas[0].filter((schema) => {
         // gender- で始まるスキーマの処理
-        if (schema.name.startsWith('gender-')) {
+        if (schema.name.startsWith("gender-")) {
           // animalGenderが未定義の場合はスキーマを除外
           if (!values.animalGender) return false;
           return schema.name === GenderTemplate[values.animalGender];
         }
 
         // disposal- で始まるスキーマの処理
-        if (schema.name.startsWith('disposal-')) {
+        if (schema.name.startsWith("disposal-")) {
           // disposalMethodが未定義の場合はスキーマを除外
           if (!values.disposalMethod) return false;
           return schema.name === DisposalMethodTemplate[values.disposalMethod];
@@ -74,29 +74,47 @@ const handleGenerate = async (values: FormValues) => {
         // その他のスキーマはそのまま残す
         return true;
       }),
-      originalTemplate.schemas[1]
-    ]
+      originalTemplate.schemas[1],
+    ],
   };
   const inputs = [
     {
-      submission_year: values.submissionDate?.getFullYear().toString() ?? '',
-      submission_month: values.submissionDate ? (values.submissionDate.getMonth() + 1).toString() : '',
-      submission_day: values.submissionDate?.getDate().toString() ?? '',
-      name: values.capturerName ?? '',
-      capture_year: values.captureDate?.getFullYear().toString() ?? '',
-      capture_month: values.captureDate ? (values.captureDate.getMonth() + 1).toString() : '',
-      capture_day: values.captureDate?.getDate().toString() ?? '',
+      submission_year: values.submissionDate?.getFullYear().toString() ?? "",
+      submission_month: values.submissionDate
+        ? (values.submissionDate.getMonth() + 1).toString()
+        : "",
+      submission_day: values.submissionDate?.getDate().toString() ?? "",
+      name: values.capturerName ?? "",
+      capture_year: values.captureDate?.getFullYear().toString() ?? "",
+      capture_month: values.captureDate
+        ? (values.captureDate.getMonth() + 1).toString()
+        : "",
+      capture_day: values.captureDate?.getDate().toString() ?? "",
       capture_day_of_week: getJapaneseDayOfWeek(values.captureDate),
-      location: values.captureLocation ?? '',
-      location_number: values.diagramNumber ?? '',
+      location: values.captureLocation ?? "",
+      location_number: values.diagramNumber ?? "",
       picture_before: values.firstPhoto?.base64,
       picture_after: values.secondPhoto?.base64,
     },
   ];
 
-  const pdf = await generate({ template, inputs, plugins: { text, image, ellipse }, options: { font } });
-  const blob = new Blob([pdf], { type: 'application/pdf' });
-  window.open(URL.createObjectURL(blob));
-}
+  const pdf = await generate({
+    template,
+    inputs,
+    plugins: { text, image, ellipse },
+    options: { font },
+  });
+  const blob = new Blob([pdf], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `capture-report-${
+    new Date().toISOString().split("T")[0]
+  }.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 
 export default handleGenerate;
