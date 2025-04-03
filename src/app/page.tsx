@@ -135,8 +135,8 @@ export default function CaptureForm() {
     <div className="container mx-auto py-10">
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle>有害鳥獣捕獲実績報告書</CardTitle>
-          <CardDescription>報告書の情報を入力してください。</CardDescription>
+          <CardTitle>茅野市 有害鳥獣捕獲実績報告書</CardTitle>
+          <CardDescription>報告書の内容を入力してください。</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
