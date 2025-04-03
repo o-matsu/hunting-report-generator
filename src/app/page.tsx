@@ -176,7 +176,12 @@ export default function CaptureForm() {
                     <FormItem>
                       <FormLabel>捕獲者名</FormLabel>
                       <FormControl>
-                        <Input placeholder="名前を入力" {...field} />
+                        <Input
+                          placeholder="名前を入力"
+                          {...field}
+                          autoComplete="capturer-name"
+                          name="capturer-name"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -246,6 +251,8 @@ export default function CaptureForm() {
                             className="rounded-l-none border-0"
                             value={field.value}
                             onChange={(e) => field.onChange(e.target.value)}
+                            autoComplete="capture-location"
+                            name="capture-location"
                           />
                         </div>
                       </FormControl>
@@ -261,7 +268,13 @@ export default function CaptureForm() {
                     <FormItem>
                       <FormLabel>図面番号</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="図面番号を入力" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="図面番号を入力"
+                          {...field}
+                          autoComplete="diagram-number"
+                          name="diagram-number"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
