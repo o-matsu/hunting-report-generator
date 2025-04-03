@@ -33,7 +33,8 @@ export const DisposalMethodTemplate = {
 const originalTemplate: Template = templateFile as Template;
 
 // 日付から日本語の曜日を取得する関数
-const getJapaneseDayOfWeek = (date: Date): string => {
+const getJapaneseDayOfWeek = (date: Date | undefined): string => {
+  if (date === undefined) return '';
   const dayOfWeek = date.getDay();
   return ['日', '月', '火', '水', '木', '金', '土'][dayOfWeek];
 };
@@ -74,16 +75,16 @@ const handleGenerate = async (values: FormValues) => {
   };
   const inputs = [
     {
-      submission_year: values.submissionDate.getFullYear().toString(),
-      submission_month: (values.submissionDate.getMonth() + 1).toString(),
-      submission_day: values.submissionDate.getDate().toString(),
-      name: values.capturerName,
-      capture_year: values.captureDate.getFullYear().toString(),
-      capture_month: (values.captureDate.getMonth() + 1).toString(),
-      capture_day: values.captureDate.getDate().toString(),
+      submission_year: values.submissionDate?.getFullYear().toString() ?? '',
+      submission_month: values.submissionDate ? (values.submissionDate.getMonth() + 1).toString() : '',
+      submission_day: values.submissionDate?.getDate().toString() ?? '',
+      name: values.capturerName ?? '',
+      capture_year: values.captureDate?.getFullYear().toString() ?? '',
+      capture_month: values.captureDate ? (values.captureDate.getMonth() + 1).toString() : '',
+      capture_day: values.captureDate?.getDate().toString() ?? '',
       capture_day_of_week: getJapaneseDayOfWeek(values.captureDate),
-      location: values.captureLocation,
-      location_number: values.diagramNumber,
+      location: values.captureLocation ?? '',
+      location_number: values.diagramNumber ?? '',
       picture_before: values.firstPhoto?.base64,
       picture_after: values.secondPhoto?.base64,
     },

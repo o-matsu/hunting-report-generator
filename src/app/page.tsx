@@ -23,35 +23,27 @@ import { Gender, DisposalMethod } from './generate';
 
 // Update the form schema to include the photo fields
 const formSchema = z.object({
-  submissionDate: z.date({
-    required_error: "Submission date is required",
-  }),
-  capturerName: z.string().min(2, {
-    message: "Capturer name must be at least 2 characters.",
-  }),
+  submissionDate: z.date().optional(),
+  capturerName: z.string().optional(),
   animalGender: z.nativeEnum(Gender, {
     required_error: "Please select the gender of the animal.",
   }),
-  captureDate: z.date({
-    required_error: "Capture date is required",
-  }),
-  captureLocation: z.string().min(2, {
-    message: "Capture location must be at least 2 characters.",
-  }),
+  captureDate: z.date().optional(),
+  captureLocation: z.string().optional(),
   diagramNumber: z.string().refine((val) => !isNaN(Number(val)), {
     message: "Diagram number must be a valid number.",
-  }),
+  }).optional(),
   disposalMethod: z.nativeEnum(DisposalMethod, {
     required_error: "Please select a disposal method.",
   }),
   firstPhoto: z.object({
     file: z.instanceof(File),
     base64: z.string(),
-  }).optional(),
+  }).required(),
   secondPhoto: z.object({
     file: z.instanceof(File),
     base64: z.string(),
-  }).optional(),
+  }).required(),
 })
 
 type FormValues = z.infer<typeof formSchema>
