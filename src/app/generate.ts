@@ -59,11 +59,15 @@ const handleGenerate = async (values: FormValues) => {
       originalTemplate.schemas[0].filter((schema) => {
         // gender- で始まるスキーマの処理
         if (schema.name.startsWith('gender-')) {
+          // animalGenderが未定義の場合はスキーマを除外
+          if (!values.animalGender) return false;
           return schema.name === GenderTemplate[values.animalGender];
         }
 
         // disposal- で始まるスキーマの処理
         if (schema.name.startsWith('disposal-')) {
+          // disposalMethodが未定義の場合はスキーマを除外
+          if (!values.disposalMethod) return false;
           return schema.name === DisposalMethodTemplate[values.disposalMethod];
         }
 

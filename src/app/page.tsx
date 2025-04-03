@@ -25,17 +25,13 @@ import { Gender, DisposalMethod } from './generate';
 const formSchema = z.object({
   submissionDate: z.date().optional(),
   capturerName: z.string().optional(),
-  animalGender: z.nativeEnum(Gender, {
-    required_error: "Please select the gender of the animal.",
-  }),
+  animalGender: z.nativeEnum(Gender).optional(),
   captureDate: z.date().optional(),
   captureLocation: z.string().optional(),
   diagramNumber: z.string().refine((val) => !isNaN(Number(val)), {
     message: "Diagram number must be a valid number.",
   }).optional(),
-  disposalMethod: z.nativeEnum(DisposalMethod, {
-    required_error: "Please select a disposal method.",
-  }),
+  disposalMethod: z.nativeEnum(DisposalMethod).optional(),
   firstPhoto: z.object({
     file: z.instanceof(File),
     base64: z.string(),
