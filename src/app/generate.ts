@@ -30,13 +30,6 @@ export const DisposalMethodTemplate = {
   [DisposalMethod.ProcessingFacility]: 'disposal-facility',
 } as const;
 
-const font: Font = {
-  NotoSerifJP: {
-    data: 'https://6e94-124-246-225-93.ngrok-free.app/NotoSerifJP-Regular.ttf',
-    fallback: true,
-  },
-};
-
 const originalTemplate: Template = templateFile as Template;
 
 // 日付から日本語の曜日を取得する関数
@@ -45,8 +38,20 @@ const getJapaneseDayOfWeek = (date: Date): string => {
   return ['日', '月', '火', '水', '木', '金', '土'][dayOfWeek];
 };
 
-const handleGenerate = (values: FormValues) => {
+const handleGenerate = async (values: FormValues) => {
   console.log(values);
+
+  // フォントファイルを取得
+  const fontResponse = await fetch('/NotoSerifJP-Regular.ttf');
+  const fontData = await fontResponse.arrayBuffer();
+
+  const font: Font = {
+    NotoSerifJP: {
+      data: fontData,
+      fallback: true,
+    },
+  };
+
   const template: Template = {
     ...originalTemplate,
     schemas: [
@@ -84,18 +89,9 @@ const handleGenerate = (values: FormValues) => {
     },
   ];
 
-  generate({ template, inputs, plugins: { text, image, ellipse }, options: { font } }).then((pdf) => {
-    const blob = new Blob([pdf], { type: 'application/pdf' });
-    window.open(URL.createObjectURL(blob));
-    // const url = URL.createObjectURL(blob);
-    // const link = document.createElement('a');
-    // link.href = url;
-    // link.download = `capture-report-${values.submissionDate.toISOString().split('T')[0]}.pdf`;
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
-    // URL.revokeObjectURL(url);
-  });
+  const pdf = await generate({ template, inputs, plugins: { text, image, ellipse }, options: { font } });
+  const blob = new Blob([pdf], { type: 'application/pdf' });
+  window.open(URL.createObjectURL(blob));
 }
 
 export default handleGenerate;
