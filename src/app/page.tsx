@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -47,10 +47,18 @@ type FieldProps<T extends keyof FormValues> = {
   field: ControllerRenderProps<FormValues, T>
 }
 
+// LocalStorageのキー
+const FORM_STORAGE_KEY = 'hunting-report-form'
+
+// 保存対象のフィールド
+type StoredFormValues = Omit<FormValues, 'firstPhoto' | 'secondPhoto'>
+
 export default function CaptureForm() {
   const [firstPhotoPreview, setFirstPhotoPreview] = useState<string | null>(null)
   const [secondPhotoPreview, setSecondPhotoPreview] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
+  // フォームの初期値を設定
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,11 +67,74 @@ export default function CaptureForm() {
       capturerName: "",
       captureLocation: "",
       diagramNumber: "",
+      animalGender: undefined,
+      disposalMethod: undefined,
     },
   })
 
-  function onSubmit(values: FormValues) {
-    handleGenerate(values)
+  // LocalStorageから値を復元
+  useEffect(() => {
+    const storedValues = localStorage.getItem(FORM_STORAGE_KEY)
+    if (storedValues) {
+      try {
+        const values = JSON.parse(storedValues) as StoredFormValues
+
+        // 日付文字列をDate型に変換し、enumの文字列を適切な型に変換
+        const formValues = {
+          ...values,
+          submissionDate: values.submissionDate ? new Date(values.submissionDate) : undefined,
+          captureDate: values.captureDate ? new Date(values.captureDate) : undefined,
+          // enumの文字列を適切な型に変換
+          animalGender: values.animalGender ? values.animalGender as Gender : undefined,
+          disposalMethod: values.disposalMethod ? values.disposalMethod as DisposalMethod : undefined,
+        }
+        console.log(formValues);
+        console.log(Object.values(Gender).includes(formValues.animalGender as Gender));
+
+        // フォームの値を個別に設定
+        Object.entries(formValues).forEach(([key, value]) => {
+          if (value !== undefined) {
+            form.setValue(key as keyof StoredFormValues, value);
+          }
+        });
+
+      } catch (error) {
+        console.error('Failed to restore form values:', error)
+      }
+    }
+  }, [form])
+
+  // フォームの値をLocalStorageに保存
+  const saveFormValues = (values: FormValues) => {
+    try {
+      const valuesToStore: StoredFormValues = {
+        submissionDate: values.submissionDate,
+        captureDate: values.captureDate,
+        capturerName: values.capturerName,
+        animalGender: values.animalGender,
+        captureLocation: values.captureLocation,
+        diagramNumber: values.diagramNumber,
+        disposalMethod: values.disposalMethod,
+      }
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(valuesToStore))
+    } catch (error) {
+      console.error('Failed to save form values:', error)
+    }
+  }
+
+  async function onSubmit(values: FormValues) {
+    setIsGenerating(true)
+    try {
+      // フォームの値を保存
+      saveFormValues(values)
+      // PDFを生成して現在のタブで開く
+      const url = await handleGenerate(values)
+      window.location.href = url
+    } catch (error) {
+      console.error('PDF generation failed:', error)
+      alert('PDFの生成に失敗しました。')
+      setIsGenerating(false)
+    }
   }
 
   const processImage = (
@@ -190,7 +261,9 @@ export default function CaptureForm() {
                     render={({ field }: FieldProps<"animalGender">) => (
                       <FormItem>
                         <FormLabel>性別</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="性別を選択" />
@@ -283,7 +356,10 @@ export default function CaptureForm() {
                     render={({ field }: FieldProps<"disposalMethod">) => (
                       <FormItem>
                         <FormLabel>処分方法</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          {...field}
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="処分方法を選択" />
@@ -373,7 +449,7 @@ export default function CaptureForm() {
                     )}
                   />
                 </div>
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isGenerating}>
                   報告書を生成
                 </Button>
               </form>
