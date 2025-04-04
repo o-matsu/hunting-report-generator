@@ -131,7 +131,7 @@ export default function CaptureForm() {
       <div className="container mx-auto px-4 py-6 md:py-10">
         <Card className="max-w-3xl mx-auto shadow-sm">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl md:text-3xl font-bold pb-4 border-b">茅野市 有害鳥獣捕獲実績報告書</CardTitle>
+            <CardTitle className="text-xl md:text-3xl font-bold pb-4 border-b">茅野市 有害鳥獣捕獲実績報告書</CardTitle>
             <CardDescription className="pt-4">報告書の内容を入力してください。</CardDescription>
           </CardHeader>
           <CardContent>
