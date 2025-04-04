@@ -29,17 +29,15 @@ const formSchema = z.object({
   captureDate: z.date().optional(),
   captureLocation: z.string().optional(),
   diagramNumber: z.string().refine((val) => !isNaN(Number(val)), {
-    message: "Diagram number must be a valid number.",
+    message: "Diagram number must be a valid number"
   }).optional(),
   disposalMethod: z.nativeEnum(DisposalMethod).optional(),
-  firstPhoto: z.object({
-    file: z.instanceof(File),
-    base64: z.string(),
-  }).required(),
-  secondPhoto: z.object({
-    file: z.instanceof(File),
-    base64: z.string(),
-  }).required(),
+  firstPhoto: z.string({
+    required_error: "1枚目の写真をアップロードしてください"
+  }).min(1, { message: "1枚目の写真をアップロードしてください" }),
+  secondPhoto: z.string({
+    required_error: "2枚目の写真をアップロードしてください"
+  }).min(1, { message: "2枚目の写真をアップロードしてください" })
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -80,12 +78,10 @@ export default function CaptureForm() {
       reader.onload = () => {
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          // 最大幅・高さを800pxに設定
           const MAX_SIZE = 800;
           let width = img.width;
           let height = img.height;
 
-          // アスペクト比を保持しながらリサイズ
           if (width > height) {
             if (width > MAX_SIZE) {
               height = Math.round((height * MAX_SIZE) / width);
@@ -104,10 +100,9 @@ export default function CaptureForm() {
           if (!ctx) return;
 
           ctx.drawImage(img, 0, 0, width, height);
-          // 画質を0.8に設定してJPEG形式で出力
           const base64 = canvas.toDataURL('image/jpeg', 0.8);
           setPreview(base64);
-          form.setValue(fieldName, { file, base64 });
+          form.setValue(fieldName, base64);
         };
         img.src = reader.result as string;
       };
@@ -310,12 +305,12 @@ export default function CaptureForm() {
                 <FormField
                   control={form.control}
                   name="firstPhoto"
-                  render={({ field }: FieldProps<"firstPhoto">) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>写真1枚目</FormLabel>
                       <FormControl>
                         <div className="border rounded-md p-4">
-                          <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 mb-4 relative">
+                          <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
                             {firstPhotoPreview ? (
                               <img
                                 src={firstPhotoPreview || "/placeholder.svg"}
@@ -331,14 +326,10 @@ export default function CaptureForm() {
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => {
-                                handleFirstPhotoChange(e)
-                                field.onChange(e.target.files?.[0] || null)
-                              }}
+                              onChange={handleFirstPhotoChange}
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                           </div>
-                          <FormDescription>1枚目の写真をアップロードしてください。</FormDescription>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -349,12 +340,12 @@ export default function CaptureForm() {
                 <FormField
                   control={form.control}
                   name="secondPhoto"
-                  render={({ field }: FieldProps<"secondPhoto">) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>写真2枚目</FormLabel>
                       <FormControl>
                         <div className="border rounded-md p-4">
-                          <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 mb-4 relative">
+                          <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
                             {secondPhotoPreview ? (
                               <img
                                 src={secondPhotoPreview || "/placeholder.svg"}
@@ -370,14 +361,10 @@ export default function CaptureForm() {
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => {
-                                handleSecondPhotoChange(e)
-                                field.onChange(e.target.files?.[0] || null)
-                              }}
+                              onChange={handleSecondPhotoChange}
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                           </div>
-                          <FormDescription>2枚目の写真をアップロードしてください。</FormDescription>
                         </div>
                       </FormControl>
                       <FormMessage />

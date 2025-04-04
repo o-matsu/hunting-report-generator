@@ -93,8 +93,8 @@ const handleGenerate = async (values: FormValues) => {
       capture_day_of_week: getJapaneseDayOfWeek(values.captureDate),
       location: values.captureLocation ?? "",
       location_number: values.diagramNumber ?? "",
-      picture_before: values.firstPhoto?.base64,
-      picture_after: values.secondPhoto?.base64,
+      picture_before: values.firstPhoto,
+      picture_after: values.secondPhoto,
     },
   ];
 
