@@ -57,6 +57,7 @@ export default function CaptureForm() {
   const [firstPhotoPreview, setFirstPhotoPreview] = useState<string | null>(null)
   const [secondPhotoPreview, setSecondPhotoPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   // フォームの初期値を設定
   const form = useForm<FormValues>({
@@ -98,9 +99,13 @@ export default function CaptureForm() {
           }
         });
 
+        setIsLoaded(true);
+
       } catch (error) {
         console.error('Failed to restore form values:', error)
       }
+    } else {
+      setIsLoaded(true);
     }
   }, [form])
 
@@ -262,6 +267,8 @@ export default function CaptureForm() {
                       <FormItem>
                         <FormLabel>性別</FormLabel>
                         <Select
+                          key={isLoaded ? field.value : 'loading'}
+                          defaultValue={field.value}
                           onValueChange={field.onChange}
                         >
                           <FormControl>
@@ -357,7 +364,8 @@ export default function CaptureForm() {
                       <FormItem>
                         <FormLabel>処分方法</FormLabel>
                         <Select
-                          {...field}
+                          key={isLoaded ? field.value : 'loading'}
+                          defaultValue={field.value}
                           onValueChange={field.onChange}
                         >
                           <FormControl>
