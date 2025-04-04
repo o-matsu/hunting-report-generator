@@ -151,7 +151,7 @@ export default function CaptureForm() {
                                 variant={"outline"}
                                 className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                               >
-                                {field.value ? format(field.value, "PPP") : <span>日付を選択</span>}
+                                {field.value ? format(field.value, "yyyy/MM/dd") : <span>日付を選択</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
