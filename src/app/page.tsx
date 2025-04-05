@@ -19,6 +19,9 @@ import * as z from "zod"
 import type { ControllerRenderProps } from "react-hook-form"
 import handleGenerate from "./generate"
 import { Gender, DisposalMethod } from './generate';
+import { AnalyticsTest } from "@/components/analytics/AnalyticsTest";
+import { useAnalytics } from "@/components/providers/FirebaseAnalyticsProvider";
+import { logEvent, AnalyticsEventName, convertFormToAnalyticsParams } from "@/lib/analytics";
 
 
 // Update the form schema to include the photo fields
@@ -54,6 +57,7 @@ const FORM_STORAGE_KEY = 'hunting-report-form'
 type StoredFormValues = Omit<FormValues, 'firstPhoto' | 'secondPhoto'>
 
 export default function CaptureForm() {
+  const { analytics } = useAnalytics();
   const [firstPhotoPreview, setFirstPhotoPreview] = useState<string | null>(null)
   const [secondPhotoPreview, setSecondPhotoPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -128,17 +132,41 @@ export default function CaptureForm() {
   }
 
   async function onSubmit(values: FormValues) {
-    setIsGenerating(true)
+    const startTime = performance.now();
+    setIsGenerating(true);
+
     try {
+      const formData = convertFormToAnalyticsParams(values);
+
+      // PDFの生成開始イベントを送信
+      logEvent(analytics, AnalyticsEventName.PDF_GENERATION_START, formData);
+
       // フォームの値を保存
-      saveFormValues(values)
+      saveFormValues(values);
+
       // PDFを生成して現在のタブで開く
-      const url = await handleGenerate(values)
-      window.location.href = url
+      const url = await handleGenerate(values);
+
+      // 成功イベントを送信
+      logEvent(analytics, AnalyticsEventName.PDF_GENERATION_SUCCESS, {
+        ...formData,
+        generation_time_ms: performance.now() - startTime,
+      });
+
+      window.location.href = url;
     } catch (error) {
-      console.error('PDF generation failed:', error)
-      alert('PDFの生成に失敗しました。')
-      setIsGenerating(false)
+      console.error('PDF generation failed:', error);
+
+      // エラーイベントを送信
+      logEvent(analytics, AnalyticsEventName.PDF_GENERATION_ERROR, {
+        error_type: 'pdf_generation',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_location: 'pdf_generation',
+        form_data: convertFormToAnalyticsParams(values),
+      });
+
+      alert('PDFの生成に失敗しました。');
+      setIsGenerating(false);
     }
   }
 
@@ -202,269 +230,286 @@ export default function CaptureForm() {
     }
   }
 
+  if (!isLoaded) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 md:py-10">
-        <Card className="max-w-3xl mx-auto shadow-sm">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-xl md:text-3xl font-bold pb-4 border-b">茅野市 有害鳥獣捕獲実績報告書</CardTitle>
-            <CardDescription className="pt-4">報告書の内容を入力してください。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="submissionDate"
-                    render={({ field }: FieldProps<"submissionDate">) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>提出日</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                              >
-                                {field.value ? format(field.value, "yyyy/MM/dd") : <span>日付を選択</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+    <>
+      {process.env.NODE_ENV === 'development' && <AnalyticsTest />}
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-6 md:py-10">
+          <Card className="max-w-3xl mx-auto shadow-sm">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-xl md:text-3xl font-bold pb-4 border-b">茅野市 有害鳥獣捕獲実績報告書</CardTitle>
+              <CardDescription className="pt-4">報告書の内容を入力してください。</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="submissionDate"
+                      render={({ field }: FieldProps<"submissionDate">) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>提出日</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                >
+                                  {field.value ? format(field.value, "yyyy/MM/dd") : <span>日付を選択</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="capturerName"
-                    render={({ field }: FieldProps<"capturerName">) => (
-                      <FormItem>
-                        <FormLabel>捕獲者名</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="名前を入力"
-                            {...field}
-                            autoComplete="capturer-name"
-                            name="capturer-name"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="animalGender"
-                    render={({ field }: FieldProps<"animalGender">) => (
-                      <FormItem>
-                        <FormLabel>性別</FormLabel>
-                        <Select
-                          key={isLoaded ? field.value : 'loading'}
-                          defaultValue={field.value}
-                          onValueChange={field.onChange}
-                        >
+                    <FormField
+                      control={form.control}
+                      name="capturerName"
+                      render={({ field }: FieldProps<"capturerName">) => (
+                        <FormItem>
+                          <FormLabel>捕獲者名</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="性別を選択" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value={Gender.Male}>オス</SelectItem>
-                            <SelectItem value={Gender.Female}>メス</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="captureDate"
-                    render={({ field }: FieldProps<"captureDate">) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>捕獲日</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                              >
-                                {field.value ? format(field.value, "yyyy/MM/dd") : <span>日付を選択</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="captureLocation"
-                    render={({ field }: FieldProps<"captureLocation">) => (
-                      <FormItem>
-                        <FormLabel>捕獲場所</FormLabel>
-                        <FormControl>
-                          <div className="relative flex rounded-md border">
-                            <span className="inline-flex items-center px-3 rounded-l-md border-r bg-gray-50 text-gray-500 whitespace-nowrap">茅野市</span>
                             <Input
-                              placeholder="場所を入力"
-                              className="rounded-l-none border-0"
-                              value={field.value}
-                              onChange={(e) => field.onChange(e.target.value)}
-                              autoComplete="capture-location"
-                              name="capture-location"
+                              placeholder="名前を入力"
+                              {...field}
+                              autoComplete="capturer-name"
+                              name="capturer-name"
                             />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="diagramNumber"
-                    render={({ field }: FieldProps<"diagramNumber">) => (
-                      <FormItem>
-                        <FormLabel>図面番号</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="図面番号を入力"
-                            {...field}
-                            autoComplete="diagram-number"
-                            name="diagram-number"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="disposalMethod"
-                    render={({ field }: FieldProps<"disposalMethod">) => (
-                      <FormItem>
-                        <FormLabel>処分方法</FormLabel>
-                        <Select
-                          key={isLoaded ? field.value : 'loading'}
-                          defaultValue={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="処分方法を選択" />
-                            </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value={DisposalMethod.Burial}>埋設</SelectItem>
-                            <SelectItem value={DisposalMethod.Incineration}>焼却</SelectItem>
-                            <SelectItem value={DisposalMethod.PersonalConsumption}>自家消費</SelectItem>
-                            <SelectItem value={DisposalMethod.ProcessingFacility}>獣肉処理施設</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                {/* Photo upload section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="firstPhoto"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>写真1枚目</FormLabel>
-                        <FormControl>
-                          <div className="border rounded-md p-4">
-                            <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
-                              {firstPhotoPreview ? (
-                                <img
-                                  src={firstPhotoPreview || "/placeholder.svg"}
-                                  alt="1枚目のプレビュー"
-                                  className="h-full object-contain"
-                                />
-                              ) : (
-                                <div className="text-center">
-                                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                  <p className="mt-2 text-sm text-gray-500">クリックして1枚目の写真をアップロード</p>
-                                </div>
-                              )}
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFirstPhotoChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              />
-                            </div>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="secondPhoto"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>写真2枚目</FormLabel>
-                        <FormControl>
-                          <div className="border rounded-md p-4">
-                            <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
-                              {secondPhotoPreview ? (
-                                <img
-                                  src={secondPhotoPreview || "/placeholder.svg"}
-                                  alt="2枚目のプレビュー"
-                                  className="h-full object-contain"
-                                />
-                              ) : (
-                                <div className="text-center">
-                                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                  <p className="mt-2 text-sm text-gray-500">クリックして2枚目の写真をアップロード</p>
-                                </div>
-                              )}
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleSecondPhotoChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    <FormField
+                      control={form.control}
+                      name="animalGender"
+                      render={({ field }: FieldProps<"animalGender">) => (
+                        <FormItem>
+                          <FormLabel>性別</FormLabel>
+                          <Select
+                            key={isLoaded ? field.value : 'loading'}
+                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="性別を選択" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={Gender.Male}>オス</SelectItem>
+                              <SelectItem value={Gender.Female}>メス</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="captureDate"
+                      render={({ field }: FieldProps<"captureDate">) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>捕獲日</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                >
+                                  {field.value ? format(field.value, "yyyy/MM/dd") : <span>日付を選択</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="captureLocation"
+                      render={({ field }: FieldProps<"captureLocation">) => (
+                        <FormItem>
+                          <FormLabel>捕獲場所</FormLabel>
+                          <FormControl>
+                            <div className="relative flex rounded-md border">
+                              <span className="inline-flex items-center px-3 rounded-l-md border-r bg-gray-50 text-gray-500 whitespace-nowrap">茅野市</span>
+                              <Input
+                                placeholder="場所を入力"
+                                className="rounded-l-none border-0"
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                autoComplete="capture-location"
+                                name="capture-location"
                               />
                             </div>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isGenerating}>
-                  報告書を生成
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="diagramNumber"
+                      render={({ field }: FieldProps<"diagramNumber">) => (
+                        <FormItem>
+                          <FormLabel>図面番号</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="図面番号を入力"
+                              {...field}
+                              autoComplete="diagram-number"
+                              name="diagram-number"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="disposalMethod"
+                      render={({ field }: FieldProps<"disposalMethod">) => (
+                        <FormItem>
+                          <FormLabel>処分方法</FormLabel>
+                          <Select
+                            key={isLoaded ? field.value : 'loading'}
+                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="処分方法を選択" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={DisposalMethod.Burial}>埋設</SelectItem>
+                              <SelectItem value={DisposalMethod.Incineration}>焼却</SelectItem>
+                              <SelectItem value={DisposalMethod.PersonalConsumption}>自家消費</SelectItem>
+                              <SelectItem value={DisposalMethod.ProcessingFacility}>獣肉処理施設</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {/* Photo upload section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="firstPhoto"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>写真1枚目</FormLabel>
+                          <FormControl>
+                            <div className="border rounded-md p-4">
+                              <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
+                                {firstPhotoPreview ? (
+                                  <img
+                                    src={firstPhotoPreview || "/placeholder.svg"}
+                                    alt="1枚目のプレビュー"
+                                    className="h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="text-center">
+                                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                    <p className="mt-2 text-sm text-gray-500">クリックして1枚目の写真をアップロード</p>
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFirstPhotoChange}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="secondPhoto"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>写真2枚目</FormLabel>
+                          <FormControl>
+                            <div className="border rounded-md p-4">
+                              <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
+                                {secondPhotoPreview ? (
+                                  <img
+                                    src={secondPhotoPreview || "/placeholder.svg"}
+                                    alt="2枚目のプレビュー"
+                                    className="h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="text-center">
+                                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                    <p className="mt-2 text-sm text-gray-500">クリックして2枚目の写真をアップロード</p>
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleSecondPhotoChange}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isGenerating}>
+                    報告書を生成
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
