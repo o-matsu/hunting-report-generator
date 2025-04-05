@@ -1,7 +1,7 @@
 "use client";
 
 import { useAnalytics } from "@/components/providers/FirebaseAnalyticsProvider";
-import { logEvent, AnalyticsEventName } from "@/lib/analytics";
+import { logEvent } from "@/lib/analytics";
 
 export function AnalyticsTest() {
   const { analytics } = useAnalytics();
