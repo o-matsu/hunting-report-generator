@@ -22,6 +22,7 @@ import { Gender, DisposalMethod } from './generate';
 import { AnalyticsTest } from "@/components/analytics/AnalyticsTest";
 import { useAnalytics } from "@/components/providers/FirebaseAnalyticsProvider";
 import { logEvent, AnalyticsEventName, convertFormToAnalyticsParams } from "@/lib/analytics";
+import { LiffUserInfo } from "@/components/liff/LiffUserInfo";
 
 
 // Update the form schema to include the photo fields
@@ -239,6 +240,10 @@ export default function CaptureForm() {
       {process.env.NODE_ENV === 'development' && <AnalyticsTest />}
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 md:py-10">
+          {/* LIFFユーザー情報表示 */}
+          <div className="mb-6">
+            <LiffUserInfo />
+          </div>
           <Card className="max-w-3xl mx-auto shadow-sm">
             <CardHeader className="space-y-2">
               <CardTitle className="text-xl md:text-3xl font-bold pb-4 border-b">茅野市 有害鳥獣捕獲実績報告書</CardTitle>
