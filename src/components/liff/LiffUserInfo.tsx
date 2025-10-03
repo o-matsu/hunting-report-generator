@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useLiff } from './LiffProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,11 +47,9 @@ export const LiffUserInfo: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
               {user.pictureUrl && (
-                <Image
+                <img
                   src={user.pictureUrl}
                   alt={user.displayName}
-                  width={48}
-                  height={48}
                   className="w-12 h-12 rounded-full"
                 />
               )}

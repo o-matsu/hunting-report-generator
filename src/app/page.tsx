@@ -5,7 +5,6 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, Upload } from "lucide-react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -178,7 +177,7 @@ export default function CaptureForm() {
     fieldName: "firstPhoto" | "secondPhoto"
   ): void => {
     try {
-      const img = new window.Image();
+      const img = new Image();
       const reader = new FileReader();
 
       reader.onload = () => {
@@ -447,11 +446,9 @@ export default function CaptureForm() {
                             <div className="border rounded-md p-4">
                               <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
                                 {firstPhotoPreview ? (
-                                  <Image
+                                  <img
                                     src={firstPhotoPreview || "/placeholder.svg"}
                                     alt="1枚目のプレビュー"
-                                    width={400}
-                                    height={192}
                                     className="h-full object-contain"
                                   />
                                 ) : (
@@ -484,11 +481,9 @@ export default function CaptureForm() {
                             <div className="border rounded-md p-4">
                               <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
                                 {secondPhotoPreview ? (
-                                  <Image
+                                  <img
                                     src={secondPhotoPreview || "/placeholder.svg"}
                                     alt="2枚目のプレビュー"
-                                    width={400}
-                                    height={192}
                                     className="h-full object-contain"
                                   />
                                 ) : (

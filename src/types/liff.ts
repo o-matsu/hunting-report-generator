@@ -19,7 +19,7 @@ export interface LiffConfig {
 }
 
 export interface LiffContext {
-  type: 'utou' | 'room' | 'group' | 'none' | 'square_chat' | 'external';
+  type: 'utou' | 'room' | 'group' | 'none';
   userId?: string;
   roomId?: string;
   groupId?: string;
