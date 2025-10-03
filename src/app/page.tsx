@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, Upload } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +23,7 @@ import { Gender, DisposalMethod } from './generate';
 import { AnalyticsTest } from "@/components/analytics/AnalyticsTest";
 import { useAnalytics } from "@/components/providers/FirebaseAnalyticsProvider";
 import { logEvent, AnalyticsEventName, convertFormToAnalyticsParams } from "@/lib/analytics";
+import { LiffUserInfo } from "@/components/liff/LiffUserInfo";
 
 
 // Update the form schema to include the photo fields
@@ -176,7 +178,7 @@ export default function CaptureForm() {
     fieldName: "firstPhoto" | "secondPhoto"
   ): void => {
     try {
-      const img = new Image();
+      const img = new window.Image();
       const reader = new FileReader();
 
       reader.onload = () => {
@@ -239,6 +241,10 @@ export default function CaptureForm() {
       {process.env.NODE_ENV === 'development' && <AnalyticsTest />}
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 md:py-10">
+          {/* LIFFユーザー情報表示 */}
+          <div className="mb-6">
+            <LiffUserInfo />
+          </div>
           <Card className="max-w-3xl mx-auto shadow-sm">
             <CardHeader className="space-y-2">
               <CardTitle className="text-xl md:text-3xl font-bold pb-4 border-b">茅野市 有害鳥獣捕獲実績報告書</CardTitle>
@@ -441,9 +447,11 @@ export default function CaptureForm() {
                             <div className="border rounded-md p-4">
                               <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
                                 {firstPhotoPreview ? (
-                                  <img
+                                  <Image
                                     src={firstPhotoPreview || "/placeholder.svg"}
                                     alt="1枚目のプレビュー"
+                                    width={400}
+                                    height={192}
                                     className="h-full object-contain"
                                   />
                                 ) : (
@@ -476,9 +484,11 @@ export default function CaptureForm() {
                             <div className="border rounded-md p-4">
                               <div className="flex items-center justify-center border-2 border-dashed rounded-md h-48 relative">
                                 {secondPhotoPreview ? (
-                                  <img
+                                  <Image
                                     src={secondPhotoPreview || "/placeholder.svg"}
                                     alt="2枚目のプレビュー"
+                                    width={400}
+                                    height={192}
                                     className="h-full object-contain"
                                   />
                                 ) : (
